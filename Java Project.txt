@@ -1,0 +1,396 @@
+
+Main.java
+
+public class Main {
+public static void main(String[] args) {
+new LoginFrame();
+}
+}
+
+
+Student.java
+
+public class Student {
+    private String name;
+    private String project;
+    private String status; // "Submitted" or "Pending"
+
+    public Student(String name, String project, String status) {
+        this.name = name;
+        this.project = project;
+        this.status = status;
+    }
+
+    public String getName() { return name; }
+    public String getProject() { return project; }
+    public String getStatus() { return status; }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    @Override
+    public String toString() {
+        return name + "," + project + "," + status;
+    }
+}
+
+AdminDashboard.java
+
+import javax.swing.*;
+import java.awt.*;
+
+public class AdminDashboard extends JFrame {
+    private AllocationManager manager;
+
+    public AdminDashboard() {
+        manager = new AllocationManager();
+
+        setTitle("Admin Dashboard");
+        setSize(550, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Gradient background
+        JPanel background = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(0, 0, new Color(30, 136, 229),
+                        getWidth(), getHeight(), new Color(21, 101, 192));
+                g2d.setPaint(gp);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        background.setLayout(new GridBagLayout());
+
+        JLabel heading = new JLabel("Admin Dashboard");
+        heading.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        heading.setForeground(Color.WHITE);
+
+        JButton addAllocationBtn = createButton("➕ Allocate Project");
+        JButton viewAllocationsBtn = createButton("📋 View Allocations");
+
+        addAllocationBtn.addActionListener(e -> new AllocationForm(manager));
+        viewAllocationsBtn.addActionListener(e -> new ViewAllocations(manager));
+
+        JPanel card = new JPanel(new GridLayout(3, 1, 10, 10));
+        card.setBackground(new Color(255, 255, 255, 220));
+        card.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
+        card.add(heading);
+        card.add(addAllocationBtn);
+        card.add(viewAllocationsBtn);
+
+        background.add(card);
+        add(background);
+        setVisible(true);
+    }
+
+    private JButton createButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setBackground(new Color(33, 150, 243));
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btn.setOpaque(true);
+        btn.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255, 100), 2));
+
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(25, 118, 210));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(33, 150, 243));
+            }
+        });
+        return btn;
+    }
+}
+
+
+LoginFrame.java
+
+import javax.swing.*;
+import java.awt.*;
+
+public class LoginFrame extends JFrame {
+    public LoginFrame() {
+        setTitle("Student Project Allocation System");
+        setSize(450, 300);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Background panel with gradient
+        JPanel background = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(0, 0, new Color(51, 153, 255),
+                                                     0, getHeight(), new Color(0, 102, 204));
+                g2d.setPaint(gp);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        background.setLayout(new GridBagLayout());
+
+        JLabel title = new JLabel("Student Project Allocation System");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        title.setForeground(Color.WHITE);
+
+        JButton adminBtn = createButton("Login as Admin");
+        adminBtn.addActionListener(e -> {
+            new AdminDashboard();
+            dispose();
+        });
+
+        JPanel innerPanel = new JPanel(new GridLayout(2, 1, 10, 10));
+        innerPanel.setBackground(new Color(255, 255, 255, 40));
+        innerPanel.add(title);
+        innerPanel.add(adminBtn);
+
+        background.add(innerPanel);
+        add(background);
+        setVisible(true);
+    }
+
+    private JButton createButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setBackground(new Color(0, 102, 204));
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(0, 128, 255));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(0, 102, 204));
+            }
+        });
+        return btn;
+    }
+}
+
+
+ViewAllocation.java
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.ArrayList;
+
+public class ViewAllocations extends JFrame {
+    private AllocationManager manager;
+    private DefaultTableModel model;
+
+    public ViewAllocations(AllocationManager manager) {
+        this.manager = manager;
+
+        setTitle("View All Project Allocations");
+        setSize(600, 400);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        JPanel background = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(0, 0, new Color(63, 81, 181),
+                        getWidth(), getHeight(), new Color(92, 107, 192));
+                g2d.setPaint(gp);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        background.setLayout(new BorderLayout(10, 10));
+
+        JLabel title = new JLabel("📋 Project Allocations", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setForeground(Color.WHITE);
+        background.add(title, BorderLayout.NORTH);
+
+        String[] columns = {"Student Name", "Project Title", "Status"};
+        model = new DefaultTableModel(columns, 0);
+        loadTableData();
+
+        JTable table = new JTable(model);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.setRowHeight(25);
+        table.setSelectionBackground(new Color(30, 136, 229));
+        table.setSelectionForeground(Color.WHITE);
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        background.add(scrollPane, BorderLayout.CENTER);
+
+        JButton toggleBtn = new JButton("🔄 Toggle Status");
+        toggleBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        toggleBtn.setBackground(new Color(255, 193, 7));
+        toggleBtn.setFocusPainted(false);
+
+        toggleBtn.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(this, "Please select a record!");
+                return;
+            }
+            String current = (String) model.getValueAt(selectedRow, 2);
+            String newStatus = current.equals("Submitted") ? "Pending" : "Submitted";
+            model.setValueAt(newStatus, selectedRow, 2);
+            manager.updateStatus(selectedRow, newStatus);
+        });
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.add(toggleBtn);
+        background.add(bottomPanel, BorderLayout.SOUTH);
+
+        add(background);
+        setVisible(true);
+    }
+
+    private void loadTableData() {
+        ArrayList<Student> students = manager.getAllocations();
+        model.setRowCount(0);
+        for (Student s : students) {
+            model.addRow(new Object[]{s.getName(), s.getProject(), s.getStatus()});
+        }
+    }
+}
+
+AllocationManager.java
+
+import java.io.*;
+import java.util.ArrayList;
+
+public class AllocationManager {
+    private ArrayList<Student> students;
+    private final String FILE_NAME = "data.txt";
+
+    public AllocationManager() {
+        students = new ArrayList<>();
+        loadData();
+    }
+
+    public void addAllocation(String studentName, String projectTitle) {
+        Student s = new Student(studentName, projectTitle, "Pending");
+        students.add(s);
+        saveData();
+    }
+
+    public ArrayList<Student> getAllocations() {
+        return students;
+    }
+
+    public void updateStatus(int index, String newStatus) {
+        if (index >= 0 && index < students.size()) {
+            students.get(index).setStatus(newStatus);
+            saveData();
+        }
+    }
+
+    private void loadData() {
+        File file = new File(FILE_NAME);
+        if (!file.exists()) return;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",", -1);
+                if (parts.length == 3) {
+                    students.add(new Student(parts[0], parts[1], parts[2]));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+        }
+    }
+
+    private void saveData() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_NAME))) {
+            for (Student s : students) {
+                bw.write(s.toString());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving file: " + e.getMessage());
+        }
+    }
+}
+
+AllocationForm.java
+
+import javax.swing.*;
+import java.awt.*;
+
+public class AllocationForm extends JFrame {
+    public AllocationForm(AllocationManager manager) {
+        setTitle("Allocate Project");
+        setSize(450, 280);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        JPanel background = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                GradientPaint gp = new GradientPaint(0, 0, new Color(25, 118, 210),
+                        getWidth(), getHeight(), new Color(13, 71, 161));
+                g2d.setPaint(gp);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        background.setLayout(new GridBagLayout());
+
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBackground(new Color(255, 255, 255, 235));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JLabel nameLabel = new JLabel("Student Name:");
+        JTextField nameField = new JTextField(15);
+        JLabel projectLabel = new JLabel("Project Title:");
+        JTextField projectField = new JTextField(15);
+
+        JButton saveBtn = new JButton("💾 Save Allocation");
+        saveBtn.setBackground(new Color(46, 204, 113));
+        saveBtn.setForeground(Color.WHITE);
+        saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        saveBtn.setFocusPainted(false);
+
+        saveBtn.addActionListener(e -> {
+            String name = nameField.getText().trim();
+            String project = projectField.getText().trim();
+
+            if (name.isEmpty() || project.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill both fields!");
+                return;
+            }
+
+            manager.addAllocation(name, project);
+            JOptionPane.showMessageDialog(this, "✅ Project allocated successfully!");
+            dispose();
+        });
+
+        gbc.gridx = 0; gbc.gridy = 0; formPanel.add(nameLabel, gbc);
+        gbc.gridx = 1; formPanel.add(nameField, gbc);
+        gbc.gridx = 0; gbc.gridy = 1; formPanel.add(projectLabel, gbc);
+        gbc.gridx = 1; formPanel.add(projectField, gbc);
+        gbc.gridx = 1; gbc.gridy = 2; formPanel.add(saveBtn, gbc);
+
+        background.add(formPanel);
+        add(background);
+        setVisible(true);
+    }
+}
